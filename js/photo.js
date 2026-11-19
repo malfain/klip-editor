@@ -182,8 +182,8 @@
       function fname() { return (p.name || 'foto').replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '-') + '.jpg'; }
       function saveSheet() {
         save();
-        var items = [{ label: 'Unduh JPG', run: function () { exportBlob().then(function (b) { K.download(b, fname()); K.toast('Foto tersimpan · ' + K.fmtMB(b.size)); }); } }];
-        if (navigator.canShare) items.push({ label: 'Bagikan', run: function () {
+        var items = [{ label: K.isApp() ? 'Simpan ke Galeri' : 'Unduh JPG', run: function () { exportBlob().then(function (b) { K.download(b, fname()); if (!K.isApp()) K.toast('Foto tersimpan · ' + K.fmtMB(b.size)); }); } }];
+        if (navigator.canShare || K.isApp()) items.push({ label: 'Bagikan', run: function () {
           exportBlob().then(function (b) { K.shareFile(b, fname()).then(function (ok) { if (!ok) { K.download(b, fname()); K.toast('Berbagi tidak didukung — foto diunduh'); } }); });
         } });
         K.actions('Hasil disimpan dalam resolusi penuh', items);

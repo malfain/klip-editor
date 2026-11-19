@@ -10,6 +10,7 @@
     app.innerHTML = '';
     var scr = K.screens[name];
     current = scr.mount(app, params || {}) || {};
+    K.currentName = name;
     try { sessionStorage.setItem('klip-last', JSON.stringify({ name: name, id: params && params.id })); } catch (e) { /* abaikan */ }
   };
 
@@ -19,11 +20,26 @@
     set: function (t) {
       try { localStorage.setItem('klip-theme', t); } catch (e) { /* abaikan */ }
       K.theme.apply();
+  /* Jembatan aplikasi siap setelah halaman dimuat: kirim ulang tema */
+  window.addEventListener('flutterInAppWebViewPlatformReady', K.theme.apply);
+
+  /* Tombol Back Android: true = ditangani di aplikasi, false = keluar */
+  window.__klipBack = function () {
+    if (K.$('.loading')) return true;
+    var bd = K.$('.sheet-backdrop');
+    if (bd) { bd.click(); return true; }
+    if (!K.currentName || K.currentName === 'home') return false;
+    var b = K.$('#app [data-close], #app [data-back]');
+    if (b) b.click(); else K.go('home');
+    return true;
+  };
     },
     apply: function () {
       var t = K.theme.get();
       if (t === 'auto') document.documentElement.removeAttribute('data-theme');
       else document.documentElement.setAttribute('data-theme', t);
+      var dark = t === 'dark' || (t === 'auto' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      K.native('theme', dark);
     }
   };
 
@@ -94,6 +110,19 @@
   };
 
   K.theme.apply();
+  /* Jembatan aplikasi siap setelah halaman dimuat: kirim ulang tema */
+  window.addEventListener('flutterInAppWebViewPlatformReady', K.theme.apply);
+
+  /* Tombol Back Android: true = ditangani di aplikasi, false = keluar */
+  window.__klipBack = function () {
+    if (K.$('.loading')) return true;
+    var bd = K.$('.sheet-backdrop');
+    if (bd) { bd.click(); return true; }
+    if (!K.currentName || K.currentName === 'home') return false;
+    var b = K.$('#app [data-close], #app [data-back]');
+    if (b) b.click(); else K.go('home');
+    return true;
+  };
   if (window.matchMedia) {
     var mq = window.matchMedia('(prefers-color-scheme: dark)');
     if (mq.addEventListener) mq.addEventListener('change', K.theme.apply);

@@ -262,7 +262,7 @@
             '<span role="status" style="font-family:var(--font-heading);font-size:22px;font-weight:600;display:flex;align-items:center;gap:8px"><span style="color:var(--success);display:flex">' + I('check') + '</span>Video siap</span>' +
             '<span class="badge badge-success">' + r.ext.toUpperCase() + ' · ' + r.w + '×' + r.h + ' · ' + K.fmtMB(r.blob.size) + '</span></main>' +
             '<section style="padding:0 20px 14px"><h2 style="margin:0 0 12px;font-size:14px;font-weight:600" class="muted">Simpan atau bagikan</h2><div class="share-grid">' +
-            '<button data-dl>' + I('download', 22) + '<span>Unduh</span></button>' +
+            '<button data-dl>' + I('download', 22) + '<span>' + (K.isApp() ? 'Simpan ke Galeri' : 'Unduh') + '</span></button>' +
             '<button data-share>' + I('share', 22) + '<span>Bagikan</span></button>' +
             '<button data-replay>' + I('replay', 22) + '<span>Putar</span></button></div></section>' +
             '<footer class="safe-bottom" style="display:flex;gap:10px;padding:12px 24px;border-top:1px solid var(--border)">' +
@@ -286,7 +286,7 @@
         var cancel = K.$('[data-cancel]', el);
         if (cancel) cancel.addEventListener('click', function () { if (st.job) st.job.cancel(); });
         var dl = K.$('[data-dl]', el);
-        if (dl) dl.addEventListener('click', function () { K.download(st.result.blob, fileName()); K.toast('Mengunduh ' + fileName()); });
+        if (dl) dl.addEventListener('click', function () { K.download(st.result.blob, fileName()); if (!K.isApp()) K.toast('Mengunduh ' + fileName()); });
         var sh = K.$('[data-share]', el);
         if (sh) sh.addEventListener('click', function () {
           K.shareFile(st.result.blob, fileName()).then(function (ok) { if (!ok) { K.download(st.result.blob, fileName()); K.toast('Berbagi tidak didukung — video diunduh'); } });
@@ -301,7 +301,8 @@
 
       function run() {
         st.phase = 'running'; st.pct = 0; draw();
-        if (navigator.wakeLock) navigator.wakeLock.request('screen').then(function (w) { st.wakeLock = w; }, function () {});
+        if (K.isApp()) K.native('keepAwake', true);
+        else if (navigator.wakeLock) navigator.wakeLock.request('screen').then(function (w) { st.wakeLock = w; }, function () {});
         st.job = render(p, p.exportCfg, function (f) {
           st.pct = f;
           var pc = K.$('[data-pct]', el), bar = K.$('[data-bar]', el);
@@ -318,7 +319,7 @@
           if (e.message !== 'cancelled') K.toast(e.message || 'Ekspor gagal'); else K.toast('Ekspor dibatalkan');
         });
       }
-      function releaseWake() { if (st.wakeLock) { st.wakeLock.release().catch(function () {}); st.wakeLock = null; } }
+      function releaseWake() { K.native('keepAwake', false); if (st.wakeLock) { st.wakeLock.release().catch(function () {}); st.wakeLock = null; } }
 
       return {
         destroy: function () {

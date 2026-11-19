@@ -187,7 +187,48 @@ K.pickFiles = function (id) {
   });
 };
 
+/* Jembatan ke aplikasi Android (Flutter InAppWebView). Di peramban biasa K.isApp() = false. */
+K.isApp = function () { return !!(window.flutter_inappwebview && window.flutter_inappwebview.callHandler); };
+K.native = function (name) {
+  if (!K.isApp()) return Promise.resolve(null);
+  var args = Array.prototype.slice.call(arguments, 1);
+  var h = window.flutter_inappwebview;
+  return h.callHandler.apply(h, [name].concat(args)).catch(function () { return null; });
+};
+/* Kirim blob ke aplikasi dalam potongan base64, lalu simpan ke galeri ('save') atau bagikan ('share') */
+K.nativeFile = function (blob, name, action) {
+  var CH = 768 * 1024;
+  function b64(part) {
+    return new Promise(function (res, rej) {
+      var fr = new FileReader();
+      fr.onload = function () { var s = fr.result; res(s.slice(s.indexOf(',') + 1)); };
+      fr.onerror = function () { rej(fr.error); };
+      fr.readAsDataURL(part);
+    });
+  }
+  var ld = K.loading(action === 'share' ? 'Menyiapkan…' : 'Menyimpan ke Galeri…');
+  return K.native('fileBegin', name, blob.type || '').then(function (id) {
+    if (!id) throw new Error('Aplikasi tidak merespons');
+    var off = 0;
+    function next() {
+      if (off >= blob.size) return K.native('fileEnd', id, action);
+      var part = blob.slice(off, off + CH);
+      off += CH;
+      ld.set((action === 'share' ? 'Menyiapkan… ' : 'Menyimpan… ') + Math.min(100, Math.round(off / blob.size * 100)) + '%');
+      return b64(part).then(function (s) { return K.native('fileChunk', id, s); }).then(next);
+    }
+    return next();
+  }).then(function (r) {
+    ld.done();
+    if (!r || !r.ok) throw new Error((r && r.msg) || 'Gagal menyimpan berkas');
+    return r;
+  }, function (e) { ld.done(); throw e; });
+};
+
 K.download = function (blob, name) {
+  if (K.isApp()) {
+    return K.nativeFile(blob, name, 'save').then(function () { K.toast('Tersimpan di Galeri › album Klip'); }, function (e) { K.toast(e.message); });
+  }
   var url = URL.createObjectURL(blob);
   var a = document.createElement('a');
   a.href = url; a.download = name;
@@ -196,6 +237,9 @@ K.download = function (blob, name) {
 };
 
 K.shareFile = function (blob, name) {
+  if (K.isApp()) {
+    return K.nativeFile(blob, name, 'share').then(function () { return true; }, function (e) { K.toast(e.message); return true; });
+  }
   try {
     var file = new File([blob], name, { type: blob.type });
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
