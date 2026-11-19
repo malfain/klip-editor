@@ -1,6 +1,8 @@
 /* Klip — Beranda, Proyek, Pengaturan */
 (function () {
   var I = K.ic;
+  /* Link tetap ke rilis terbaru di GitHub (nama aset harus selalu Klip.apk) */
+  K.APK_URL = 'https://github.com/malfain/klip-editor/releases/latest/download/Klip.apk';
 
   function tabbar(active) {
     var tabs = [['home', 'edit', 'Edit'], ['projects', 'grid', 'Proyek'], ['settings', 'gear', 'Pengaturan']];
@@ -170,6 +172,10 @@
         '<div class="group"><div class="group-row"><span class="lbl">Terpakai<small>Proyek & media disimpan di peramban ini</small></span><span class="tnum muted" data-used>…</span></div>' +
         '<div class="group-row"><span class="lbl">Format ekspor video<small>Tergantung dukungan peramban</small></span><span class="muted">' + (fmt ? fmt.label : 'Tidak didukung') + '</span></div>' +
         '<div class="group-row"><button class="btn-link danger" data-clear style="padding:0">Hapus semua proyek</button></div></div></section>' +
+        (K.isApp() ? '' :
+          '<section style="display:flex;flex-direction:column;gap:10px"><h2 class="section-h" style="font-size:15px;color:var(--muted-foreground);font-weight:600">Aplikasi Android</h2>' +
+          '<div class="group"><div class="group-row"><span class="lbl">Klip untuk Android<small>Bisa dipakai offline, hasil langsung tersimpan ke Galeri. Setelah mengunduh, izinkan "Instal dari sumber tidak dikenal".</small></span></div>' +
+          '<div class="group-row"><a class="btn btn-primary" data-apk href="' + K.APK_URL + '" rel="noopener" style="width:100%">' + I('download', 20) + 'Unduh aplikasi Android (APK)</a></div></div></section>') +
         '<section style="display:flex;flex-direction:column;gap:10px"><h2 class="section-h" style="font-size:15px;color:var(--muted-foreground);font-weight:600">Tentang</h2>' +
         '<div class="group"><div class="group-row"><span class="lbl">Klip 1.0<small>Editor video & foto. Semua pemrosesan terjadi di perangkat Anda — tidak ada berkas yang diunggah.</small></span></div></div></section>' +
         '</main>' + tabbar('settings');
